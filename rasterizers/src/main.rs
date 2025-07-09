@@ -1,4 +1,5 @@
 mod barycentric;
+mod scanline;
 mod shared;
 
 use minifb::Scale;
@@ -33,20 +34,21 @@ fn main() {
     #[rustfmt::skip]
     let mut triangle = Triangle {
         vertices: [
-            Vertex { pos: vector!(-0.5, -0.5, 0), col: vector!(1  , 0.7, 0  ) },
-            Vertex { pos: vector!(0.5 , -0.5, 0), col: vector!(0  , 1  , 0.7) },
+            Vertex { pos: vector!(-0.3, -0.5, 0), col: vector!(1  , 0.7, 0  ) },
+            Vertex { pos: vector!(0.3 , -0.5, 0), col: vector!(0  , 1  , 0.7) },
             Vertex { pos: vector!(0   , 0.5 , 0), col: vector!(0.7, 0  , 1  ) },
         ],
-        pos: vector!(0, 0, 4),
+        pos: vector!(0, 0, 10),
         rot: vector!(0, 0, 0),
-        scale: 3.,
+        scale: 5.5,
     };
 
     while !should_exit(&window) {
-        triangle.rot = triangle.rot + vector!(0, 0.01, 0.001);
+        triangle.rot = triangle.rot + vector!(0.01, 0.02, 0.001);
 
         buffer.clear();
         barycentric::render(&mut buffer, &triangle);
+        scanline::render(&mut buffer, &triangle);
 
         window
             .update_with_buffer(

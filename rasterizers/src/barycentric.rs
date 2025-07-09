@@ -17,8 +17,8 @@ pub struct BoundingBox<T> {
 impl Triangle {
     pub fn bounds(&self) -> BoundingBox<usize> {
         let (xs, ys) = (
-            self.vertices.map(|vertex| vertex.pos.x as usize),
-            self.vertices.map(|vertex| vertex.pos.y as usize),
+            self.vertices.map(|vertex| vertex.pos.x.round() as usize),
+            self.vertices.map(|vertex| vertex.pos.y.round() as usize),
         );
 
         BoundingBox {
@@ -39,7 +39,7 @@ pub fn render(buffer: &mut Buffer2<Vec3f>, triangle: &Triangle) {
             let point = vector!(x, y) + vector!(0.5, 0.5);
 
             let lambdas = system.calculate_point(point);
-            if !(lambdas.x > 0. && lambdas.y > 0. && lambdas.z > 0.) {
+            if !system.within_triangle(lambdas) {
                 continue;
             }
 
@@ -48,9 +48,15 @@ pub fn render(buffer: &mut Buffer2<Vec3f>, triangle: &Triangle) {
             let inv_depths = vector!(1. / a.pos.z, 1. / b.pos.z, 1. / c.pos.z);
             let depth = (inv_depths * lambdas).recip();
 
-            let r = vector!(a.col.x, b.col.x, c.col.x) * lambdas;
-            let g = vector!(a.col.y, b.col.y, c.col.y) * lambdas;
-            let b = vector!(a.col.z, b.col.z, c.col.z) * lambdas;
+            let r = vector!(a.col.x * inv_depths.x, b.col.x * inv_depths.y, c.col.x * inv_depths.z)
+                * lambdas
+                * depth;
+            let g = vector!(a.col.y * inv_depths.x, b.col.y * inv_depths.y, c.col.y * inv_depths.z)
+                * lambdas
+                * depth;
+            let b = vector!(a.col.z * inv_depths.x, b.col.z * inv_depths.y, c.col.z * inv_depths.z)
+                * lambdas
+                * depth;
 
             buffer.set(x, y, vector!(r, g, b));
         }

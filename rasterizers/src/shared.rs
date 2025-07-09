@@ -93,7 +93,7 @@ impl Triangle {
             let nx = position.x * hw + hw;
             let ny = -position.y * hh + hh;
 
-            Vertex { pos: vector!(nx, ny, vertex.pos.z), col: vertex.col }
+            Vertex { pos: vector!(nx, ny, position.z), col: vertex.col }
         });
 
         Self {
@@ -127,6 +127,10 @@ impl BarycentricSystem {
         let area = apb + bpc + cpa;
 
         weights / area
+    }
+
+    pub fn within_triangle(&self, lambdas: Vec3f) -> bool {
+        lambdas.x >= 0. && lambdas.y >= 0. && lambdas.z >= 0.
     }
 }
 
