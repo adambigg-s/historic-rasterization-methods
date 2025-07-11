@@ -9,4 +9,4 @@ non-scientific testing of ~100,000 arbitrary triangle rasterizations:
 | Raytraced | 16162.85 |
 
 all methods are reasonably optimized and render an identical, watertight polygon with perspective correct interpolation that is spinning:
-![til](https://github.com/adambigg-s/historic-rasterization-methods/tree/main/rasterizers/demo/spin.gif)
+![alt text](https://github.com/adambigg-s/historic-rasterization-methods/blob/main/rasterizers/demo/spin.gif)
