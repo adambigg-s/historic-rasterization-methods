@@ -1,8 +1,6 @@
 use toolbox::containers::buffer::Buffer2;
 use toolbox::math::vector::Vector2;
 use toolbox::math::vector::Vector3;
-use toolbox::vec2;
-use toolbox::vec3;
 use toolbox::vector;
 
 use crate::shared::BarycentricSystem;
@@ -17,8 +15,8 @@ pub struct BoundingBox<T> {
 impl Triangle {
     pub fn bounds(&self) -> BoundingBox<usize> {
         let (xs, ys) = (
-            self.vertices.map(|vertex| vertex.pos.x.round() as usize),
-            self.vertices.map(|vertex| vertex.pos.y.round() as usize),
+            self.vertices.map(|vertex| vertex.pos.x as usize),
+            self.vertices.map(|vertex| vertex.pos.y as usize),
         );
 
         BoundingBox {
@@ -38,10 +36,11 @@ pub fn render(buffer: &mut Buffer2<Vec3f>, triangle: &Triangle) {
         for x in bounds.mins.x..bounds.maxs.x {
             let point = vector!(x, y) + vector!(0.5, 0.5);
 
-            let lambdas = system.calculate_point(point);
-            if !system.within_triangle(lambdas) {
+            let weighted = system.calculate_point(point);
+            if !system.within_triangle(weighted) {
                 continue;
             }
+            let lambdas = system.normalized(weighted);
 
             let [a, b, c] = &triangle.vertices;
 

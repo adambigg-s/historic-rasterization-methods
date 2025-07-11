@@ -1,4 +1,5 @@
 mod barycentric;
+mod raytrace;
 mod scanline;
 mod shared;
 
@@ -8,7 +9,6 @@ use minifb::WindowOptions;
 
 use toolbox::containers::buffer::Buffer2;
 use toolbox::math::vector::Vector3;
-use toolbox::vec3;
 use toolbox::vector;
 
 use shared::pack_color;
@@ -34,20 +34,26 @@ fn main() {
     #[rustfmt::skip]
     let mut triangle = Triangle {
         vertices: [
-            Vertex { pos: vector!(-0.3, -0.5, 0), col: vector!(1  , 0.7, 0  ) },
-            Vertex { pos: vector!(0.3 , -0.5, 0), col: vector!(0  , 1  , 0.7) },
+            Vertex { pos: vector!(-0.5, -0.5, 0), col: vector!(1  , 0.7, 0  ) },
+            Vertex { pos: vector!(0.5 , -0.5, 0), col: vector!(0  , 1  , 0.7) },
             Vertex { pos: vector!(0   , 0.5 , 0), col: vector!(0.7, 0  , 1  ) },
         ],
         pos: vector!(0, 0, 10),
         rot: vector!(0, 0, 0),
-        scale: 5.5,
+        scale: 9.,
     };
 
-    while !should_exit(&window) {
-        triangle.rot = triangle.rot + vector!(0.01, 0.02, 0.001);
+    let mut count = 0;
+    let timer = std::time::Instant::now();
+    let frames = 100;
+    while !should_exit(&window) && count < 60 * frames {
+        count += 1;
+
+        triangle.rot = triangle.rot + vector!(0.02, 0.01, 0.003);
 
         buffer.clear();
         barycentric::render(&mut buffer, &triangle);
+        raytrace::render(&mut buffer, &triangle);
         scanline::render(&mut buffer, &triangle);
 
         window
@@ -58,4 +64,6 @@ fn main() {
             )
             .expect("failed to update buffer");
     }
+    let duration = timer.elapsed().as_secs_f32();
+    println!("elapsed time for {} frames: {}", 60 * frames, duration);
 }

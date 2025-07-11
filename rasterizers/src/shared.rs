@@ -4,8 +4,7 @@ use minifb::Window;
 use toolbox::math::matrix::Matrix3;
 use toolbox::math::vector::Vector2;
 use toolbox::math::vector::Vector3;
-use toolbox::vec2;
-use toolbox::vec3;
+use toolbox::matrix;
 use toolbox::vector;
 
 pub type Vec2f = Vector2<f32>;
@@ -27,11 +26,11 @@ impl Rotation3 for Matrix3<f32> {
         let (s, c) = angle.sin_cos();
 
         #[rustfmt::skip]
-        let out = Matrix3::build([
-            [1., 0., 0.],
-            [0., c , -s],
-            [0., s , c ],
-        ]);
+        let out = matrix!(
+            1, 0, 0 ,
+            0, c, -s,
+            0, s, c
+        );
         out
     }
 
@@ -39,11 +38,11 @@ impl Rotation3 for Matrix3<f32> {
         let (s, c) = angle.sin_cos();
 
         #[rustfmt::skip]
-        let out = Matrix3::build([
-            [c , 0., s ],
-            [0., 1., 0.],
-            [-s, 0., c ],
-        ]);
+        let out = matrix!(
+            c , 0, s,
+            0 , 1, 0,
+            -s, 0, c
+        );
         out
     }
 
@@ -51,11 +50,11 @@ impl Rotation3 for Matrix3<f32> {
         let (s, c) = angle.sin_cos();
 
         #[rustfmt::skip]
-        let out = Matrix3::build([
-            [c , -s, 0.],
-            [s , c , 0.],
-            [0., 0., 1.],
-        ]);
+        let out = matrix!(
+            c, -s, 0,
+            s, c , 0,
+            0, 0 , 1
+        );
         out
     }
 }
@@ -76,22 +75,32 @@ pub struct Triangle {
 
 impl Triangle {
     pub fn screen_transform(&self, width: usize, height: usize) -> Self {
-        let rotation = <Mat3f as Rotation3>::rotation_x(self.rot.x)
+        let xyz_transform = <Mat3f as Rotation3>::rotation_x(self.rot.x)
             * <Mat3f as Rotation3>::rotation_y(self.rot.y)
             * <Mat3f as Rotation3>::rotation_z(self.rot.z);
 
-        let (hw, hh) = (width as f32 / 2., height as f32 / 2.);
+        let (half_width, half_height) = (width as f32 / 2., height as f32 / 2.);
+        let aspect_ratio = width as f32 / height as f32;
 
         let vertices = self.vertices.map(|vertex| {
-            let mut position = vertex.pos * self.scale;
-            position = rotation * position;
-            position = self.pos + position;
+            let mut position = vertex.pos;
 
-            position.x /= position.z;
+            // scale
+            position = position * self.scale;
+
+            // attitude
+            position = xyz_transform * position;
+
+            // translation
+            position = position + self.pos;
+
+            // projection
+            position.x /= position.z * aspect_ratio;
             position.y /= position.z;
 
-            let nx = position.x * hw + hw;
-            let ny = -position.y * hh + hh;
+            // screenspace conversion
+            let nx = position.x * half_width + half_width;
+            let ny = -position.y * half_height + half_height;
 
             Vertex { pos: vector!(nx, ny, position.z), col: vertex.col }
         });
@@ -124,7 +133,12 @@ impl BarycentricSystem {
         let (apb, bpc, cpa) = ((self.b - self.a) % ap, (self.c - self.b) % bp, (self.a - self.c) % cp);
 
         let weights = vector!(bpc, cpa, apb);
-        let area = apb + bpc + cpa;
+
+        weights
+    }
+
+    pub fn normalized(&self, weights: Vec3f) -> Vec3f {
+        let area = weights.x + weights.y + weights.z;
 
         weights / area
     }
