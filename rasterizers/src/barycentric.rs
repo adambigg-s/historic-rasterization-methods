@@ -3,8 +3,8 @@ use toolbox::math::vector::Vector2;
 use toolbox::math::vector::Vector3;
 use toolbox::vector;
 
-use crate::shared::BarycentricSystem;
 use crate::shared::Triangle;
+use crate::shared::Vec2f;
 use crate::shared::Vec3f;
 
 pub struct BoundingBox<T> {
@@ -23,6 +23,35 @@ impl Triangle {
             mins: Vector2::build(*xs.iter().min().unwrap(), *ys.iter().min().unwrap()),
             maxs: Vector2::build(*xs.iter().max().unwrap(), *ys.iter().max().unwrap()),
         }
+    }
+}
+
+pub struct BarycentricSystem {
+    a: Vec2f,
+    b: Vec2f,
+    c: Vec2f,
+}
+
+impl BarycentricSystem {
+    pub fn from(triangle: &Triangle) -> Self {
+        let [a, b, c] = triangle.vertices.map(|vertex| vector!(vertex.pos.x.floor(), vertex.pos.y.floor()));
+
+        Self { a, b, c }
+    }
+
+    pub fn calculate_point(&self, point: Vec2f) -> Vec3f {
+        let (ap, bp, cp) = (point - self.a, point - self.b, point - self.c);
+
+        let (apb, bpc, cpa) = ((self.b - self.a) % ap, (self.c - self.b) % bp, (self.a - self.c) % cp);
+
+        let weights = vector!(bpc, cpa, apb);
+        let area = bpc + cpa + apb;
+
+        weights / area
+    }
+
+    pub fn within_triangle(&self, lambdas: Vec3f) -> bool {
+        lambdas.x >= 0. && lambdas.y >= 0. && lambdas.z >= 0.
     }
 }
 

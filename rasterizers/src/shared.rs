@@ -59,13 +59,13 @@ impl Rotation3 for Matrix3<f32> {
     }
 }
 
-#[derive(Clone, Copy)]
+#[derive(Debug, Clone, Copy)]
 pub struct Vertex {
     pub pos: Vec3f,
     pub col: Vec3f,
 }
 
-#[derive(Clone, Copy)]
+#[derive(Debug, Clone, Copy)]
 pub struct Triangle {
     pub vertices: [Vertex; 3],
     pub pos: Vec3f,
@@ -111,35 +111,6 @@ impl Triangle {
             rot: self.rot,
             scale: self.scale,
         }
-    }
-}
-
-pub struct BarycentricSystem {
-    a: Vec2f,
-    b: Vec2f,
-    c: Vec2f,
-}
-
-impl BarycentricSystem {
-    pub fn from(triangle: &Triangle) -> Self {
-        let [a, b, c] = triangle.vertices.map(|vertex| vector!(vertex.pos.x.floor(), vertex.pos.y.floor()));
-
-        Self { a, b, c }
-    }
-
-    pub fn calculate_point(&self, point: Vec2f) -> Vec3f {
-        let (ap, bp, cp) = (point - self.a, point - self.b, point - self.c);
-
-        let (apb, bpc, cpa) = ((self.b - self.a) % ap, (self.c - self.b) % bp, (self.a - self.c) % cp);
-
-        let weights = vector!(bpc, cpa, apb);
-        let area = bpc + cpa + apb;
-
-        weights / area
-    }
-
-    pub fn within_triangle(&self, lambdas: Vec3f) -> bool {
-        lambdas.x >= 0. && lambdas.y >= 0. && lambdas.z >= 0.
     }
 }
 
