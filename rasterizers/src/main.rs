@@ -43,18 +43,13 @@ fn main() {
         scale: 9.,
     };
 
-    let mut count = 0;
-    let timer = std::time::Instant::now();
-    let frames = 100;
-    while !should_exit(&window) && count < 60 * frames {
-        count += 1;
-
+    while !should_exit(&window) {
         triangle.rot = triangle.rot + vector!(0.02, 0.01, 0.003);
 
         buffer.clear();
         barycentric::render(&mut buffer, &triangle);
-        raytrace::render(&mut buffer, &triangle);
         scanline::render(&mut buffer, &triangle);
+        raytrace::render(&mut buffer, &triangle);
 
         window
             .update_with_buffer(
@@ -64,6 +59,4 @@ fn main() {
             )
             .expect("failed to update buffer");
     }
-    let duration = timer.elapsed().as_secs_f32();
-    println!("elapsed time for {} frames: {}", 60 * frames, duration);
 }

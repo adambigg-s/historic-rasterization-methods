@@ -133,12 +133,7 @@ impl BarycentricSystem {
         let (apb, bpc, cpa) = ((self.b - self.a) % ap, (self.c - self.b) % bp, (self.a - self.c) % cp);
 
         let weights = vector!(bpc, cpa, apb);
-
-        weights
-    }
-
-    pub fn normalized(&self, weights: Vec3f) -> Vec3f {
-        let area = weights.x + weights.y + weights.z;
+        let area = bpc + cpa + apb;
 
         weights / area
     }

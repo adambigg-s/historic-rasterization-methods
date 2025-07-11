@@ -32,30 +32,31 @@ pub fn render(buffer: &mut Buffer2<Vec3f>, triangle: &Triangle) {
     let bounds = triangle.bounds();
     let system = BarycentricSystem::from(&triangle);
 
-    for y in bounds.mins.y..bounds.maxs.y {
-        for x in bounds.mins.x..bounds.maxs.x {
-            let point = vector!(x, y) + vector!(0.5, 0.5);
+    let [a, b, c] = &triangle.vertices;
+    let inv_depths = vector!(1. / a.pos.z, 1. / b.pos.z, 1. / c.pos.z);
+    let r_pre = vector!(a.col.x * inv_depths.x, b.col.x * inv_depths.y, c.col.x * inv_depths.z);
+    let g_pre = vector!(a.col.y * inv_depths.x, b.col.y * inv_depths.y, c.col.y * inv_depths.z);
+    let b_pre = vector!(a.col.z * inv_depths.x, b.col.z * inv_depths.y, c.col.z * inv_depths.z);
 
-            let weighted = system.calculate_point(point);
-            if !system.within_triangle(weighted) {
+    for y in bounds.mins.y..bounds.maxs.y {
+        let lambdas_start = system.calculate_point(vector!(bounds.mins.x, y) + vector!(0.5, 0.5));
+        let lambdas_end = system.calculate_point(vector!(bounds.maxs.x, y) + vector!(0.5, 0.5));
+        let lambda_step = (lambdas_end - lambdas_start) / (bounds.maxs.x as f32 - bounds.mins.x as f32);
+
+        let mut lambdas = lambdas_start;
+        for x in bounds.mins.x..bounds.maxs.x {
+            let weights = lambdas;
+            lambdas = lambdas + lambda_step;
+
+            if !system.within_triangle(weights) {
                 continue;
             }
-            let lambdas = system.normalized(weighted);
 
-            let [a, b, c] = &triangle.vertices;
+            let depth = (inv_depths * weights).recip();
 
-            let inv_depths = vector!(1. / a.pos.z, 1. / b.pos.z, 1. / c.pos.z);
-            let depth = (inv_depths * lambdas).recip();
-
-            let r = vector!(a.col.x * inv_depths.x, b.col.x * inv_depths.y, c.col.x * inv_depths.z)
-                * lambdas
-                * depth;
-            let g = vector!(a.col.y * inv_depths.x, b.col.y * inv_depths.y, c.col.y * inv_depths.z)
-                * lambdas
-                * depth;
-            let b = vector!(a.col.z * inv_depths.x, b.col.z * inv_depths.y, c.col.z * inv_depths.z)
-                * lambdas
-                * depth;
+            let r = r_pre * weights * depth;
+            let g = g_pre * weights * depth;
+            let b = b_pre * weights * depth;
 
             buffer.set(x, y, vector!(r, g, b));
         }
