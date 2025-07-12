@@ -1,3 +1,7 @@
+use std::ops::Add;
+use std::ops::Div;
+use std::ops::Sub;
+
 use minifb::Key;
 use minifb::Window;
 
@@ -56,6 +60,37 @@ impl Rotation3 for Matrix3<f32> {
             0, 0 , 1
         );
         out
+    }
+}
+
+pub struct Interpolator<T> {
+    pub step: T,
+    pub curr: T,
+}
+
+#[allow(dead_code)]
+impl<T> Interpolator<T>
+where
+    T: Add<Output = T> + Sub<Output = T> + Clone + Copy,
+{
+    #[inline(always)]
+    pub fn build<D>(start: T, end: T, steps: D) -> Self
+    where
+        T: Div<D, Output = T>,
+    {
+        Self { step: (end - start) / steps, curr: start }
+    }
+
+    #[inline(always)]
+    pub fn progress(&mut self) -> T {
+        self.curr = self.curr + self.step;
+        self.curr
+    }
+
+    #[inline(always)]
+    pub fn regress(&mut self) -> T {
+        self.curr = self.curr - self.step;
+        self.curr
     }
 }
 

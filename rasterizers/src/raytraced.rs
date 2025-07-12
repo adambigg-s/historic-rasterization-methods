@@ -33,12 +33,12 @@ impl Ray {
         let inv_det = 1. / det;
 
         let u = (tvec * pvec) * inv_det;
-        if !(0. ..=1.).contains(&u) {
+        if !(EPSILON..=1.).contains(&u) {
             return None;
         }
 
         let v = (self.direc * qvec) * inv_det;
-        if !(0. ..=1.).contains(&v) {
+        if !(EPSILON..=1.).contains(&v) {
             return None;
         }
 
@@ -96,7 +96,7 @@ pub fn render(buffer: &mut Buffer2<Vec3f>, triangle: &Triangle) {
 
             let ray = Ray {
                 origin: vector!(0, 0, 0),
-                direc: vector!(ndc_x * ar, ndc_y, 1).normalize(),
+                direc: vector!(ndc_x * ar, ndc_y, 1),
             };
 
             let Some(weights) = ray.intersection(&triangle)
