@@ -1,6 +1,7 @@
 use toolbox::containers::buffer::Buffer2;
-use toolbox::math::vector::FloatVectorOps;
+use toolbox::math::vector::Vector2;
 use toolbox::math::vector::Vector3;
+use toolbox::swizzle;
 use toolbox::vector;
 
 use crate::shared::Mat3f;
@@ -20,16 +21,17 @@ impl Ray {
         const EPSILON: f32 = 1e-6;
 
         let [a, b, c] = triangle.vertices.map(|vertex| vertex.pos);
-        let e1 = b - a;
-        let e2 = c - a;
-        let pvec = self.direc % e2;
-        let det = e1 * pvec;
+        let edge0 = b - a;
+        let edge1 = c - a;
+
+        let pvec = self.direc % edge1;
+        let det = edge0 * pvec;
         if det.abs() < EPSILON {
             return None;
         }
 
         let tvec = self.origin - a;
-        let qvec = tvec % e1;
+        let qvec = tvec % edge0;
         let inv_det = 1. / det;
 
         let u = (tvec * pvec) * inv_det;
@@ -91,13 +93,11 @@ pub fn render(buffer: &mut Buffer2<Vec3f>, triangle: &Triangle) {
 
     for y in 0..buffer.height {
         for x in 0..buffer.width {
-            let ndc_x = (x as f32 + 0.5) / buffer.width as f32 * 2. - 1.;
-            let ndc_y = -(y as f32 + 0.5) / buffer.height as f32 * 2. + 1.;
+            let ndcx = ((x as f32 + 0.5) / buffer.width as f32 * 2. - 1.) * ar;
+            let ndcy = -(y as f32 + 0.5) / buffer.height as f32 * 2. + 1.;
+            let ndc = vector!(ndcx, ndcy);
 
-            let ray = Ray {
-                origin: vector!(0, 0, 0),
-                direc: vector!(ndc_x * ar, ndc_y, 1),
-            };
+            let ray = Ray { origin: vector!(0, 0, 0), direc: swizzle!(ndc; x, y, 1) };
 
             let Some(weights) = ray.intersection(&triangle)
             else {
